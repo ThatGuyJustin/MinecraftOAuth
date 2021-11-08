@@ -20,7 +20,7 @@ public class CustomConfigBungee {
 
         if (!file.exists()) {
             file.getParentFile().mkdirs();
-            plugin.saveResource(plugin, fileName, fileName + ".yml", false);
+            plugin.saveResource(plugin, fileName + ".yml", fileName + ".yml", false);
         }
 
         try {

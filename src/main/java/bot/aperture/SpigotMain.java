@@ -1,14 +1,20 @@
 package bot.aperture;
 
+import bot.aperture.utils.CustomConfigSpigot;
 import bot.aperture.utils.LoggerSpigot;
 import org.bukkit.plugin.java.JavaPlugin;
 import bot.aperture.oauth.WebApp;
 
 public class SpigotMain extends JavaPlugin {
+    public static CustomConfigSpigot AuthConfig;
     private static WebApp webapp;
 
     @Override
     public void onEnable(){
+
+        this.saveDefaultConfig();
+
+        AuthConfig = new CustomConfigSpigot(this, "auth");
 
         if (true) {
             webapp = new WebApp(this);
@@ -31,5 +37,9 @@ public class SpigotMain extends JavaPlugin {
         }
 
         LoggerSpigot.info("Plugin Disabled!", true);
+    }
+
+    public CustomConfigSpigot getAuthConfig(){
+        return AuthConfig;
     }
 }

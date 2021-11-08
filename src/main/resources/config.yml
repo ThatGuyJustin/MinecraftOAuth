@@ -7,15 +7,16 @@
 enabled: true
 
 web:
+  enabled: true
   port: 8000
   host: "localhost"
 
 # OAuth Stuff for Discord
 discord:
-  oauth_url: ""
-  application_id: ""
+  oauth_url: "http://localhost:8000/auth"
+  client_id: ""
   client_secret: ""
-  redirect_uri: ""
+  redirect_uri: "http://localhost:8000/callback",
 
   # Should we check for certain servers?
   check_servers: false

@@ -2,6 +2,8 @@ package bot.aperture;
 
 import bot.aperture.listeners.BungeeListener;
 import bot.aperture.oauth.WebApp;
+import bot.aperture.utils.CustomConfigBungee;
+import bot.aperture.utils.LoggerBungee;
 import bot.aperture.utils.LoggerSpigot;
 import com.google.common.io.ByteStreams;
 import net.md_5.bungee.api.ProxyServer;
@@ -15,6 +17,8 @@ import java.nio.file.Files;
 
 
 public class BungeeMain extends Plugin{
+
+    public static CustomConfigBungee AuthConfig;
 
     private static WebApp webapp;
     private Configuration config;
@@ -35,6 +39,8 @@ public class BungeeMain extends Plugin{
             }
         }
 
+        AuthConfig = new CustomConfigBungee(this, "auth");
+
         try {
             this.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(new File(getDataFolder(), "config.yml"));
         } catch (IOException e) {
@@ -46,10 +52,10 @@ public class BungeeMain extends Plugin{
             try {
                 webapp.start();
             } catch (Exception e) {
-                LoggerSpigot.error("[Webserver] " + "Cannot start: " + e.getMessage(), true);
+                LoggerBungee.error("[Webserver] " + "Cannot start: " + e.getMessage(), true);
             }
         } else {
-            LoggerSpigot.log("[Webserver] Not Starting due to config value", true);
+            LoggerBungee.log("[Webserver] Not Starting due to config value", true);
         }
 
         ProxyServer.getInstance().getPluginManager().registerListener(this, new BungeeListener(this));
@@ -129,5 +135,9 @@ public class BungeeMain extends Plugin{
             e.printStackTrace();
             return null;
         }
+    }
+
+    public CustomConfigBungee getAuthConfig(){
+        return AuthConfig;
     }
 }
