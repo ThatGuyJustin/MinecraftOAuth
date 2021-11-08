@@ -13,7 +13,6 @@ import io.javalin.http.staticfiles.Location;
 import io.mikael.urlbuilder.UrlBuilder;
 
 import okhttp3.*;
-import org.eclipse.jetty.util.ajax.JSON;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -21,6 +20,8 @@ import org.json.JSONTokener;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WebApp {
     protected static final OkHttpClient httpClient = new OkHttpClient();
@@ -37,6 +38,7 @@ public class WebApp {
     private static String client_secret;
     private static String redirect_uri;
     private static String scope;
+    private static final Map<UUID, String> state = new ConcurrentHashMap<>();
 
     private UrlBuilder AuthURL;
 
@@ -68,10 +70,8 @@ public class WebApp {
             config.requestLogger((ctx, timeMs) -> LoggerBungee.info(String.format("[Webserver] %s %s %s took %s ms ", ctx.status(), ctx.method(), ctx.path(), timeMs), true));
         });
 
-        LoggerBungee.debug(AuthURL.toString());
-
         app.get("/auth", ctx -> ctx.redirect(AuthURL.toString(), 307));
-        app.get("/callback", WebApp::OauthCallback);
+        app.get("/callback", this::OauthCallback);
 
 
         app.error(403, WebApp::ErrorPageRender);
@@ -112,7 +112,7 @@ public class WebApp {
 
 
         app.get("/auth", ctx -> ctx.redirect(AuthURL.toString(), 307));
-        app.get("/callback", WebApp::OauthCallback);
+        app.get("/callback", this::OauthCallback);
 
         app.error(403, WebApp::ErrorPageRender);
         app.error(404, WebApp::ErrorPageRender);
@@ -157,8 +157,33 @@ public class WebApp {
         ctx.result(String.format("%s %s", ctx.status(), ErrorStr));
     }
 
+    private JSONObject getUser(JSONObject oauth){
+        Request req = new Request.Builder().url("https://discord.com/api/v9/users/@me")
+                .addHeader("Authorization", "Bearer " + oauth.getString("access_token")).build();
 
-    private static void OauthCallback(@NotNull Context ctx) {
+        LoggerBungee.debug(req.toString());
+
+        try (Response resp = httpClient.newCall(req).execute()) {
+            if (resp.code() == 401) {
+                return null;
+            }
+            ResponseBody body = resp.body();
+            if (body == null) {
+                return null;
+            }
+            JSONObject user = new JSONObject(new JSONTokener(body.string()));
+
+            return user;
+//            return new SavedOAuthUser(user.getString("username"), user.getString("discriminator"),
+//                    user.getString("id"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    private void OauthCallback(@NotNull Context ctx) {
         //Do something here to take the code, given as a pram and yeet yeet it to get a barrer/refresh token
         String code = ctx.queryParam("code");
 
@@ -181,13 +206,21 @@ public class WebApp {
             }
 
             JSONObject bodyJson = new JSONObject(new JSONTokener(bodyStr));
-            LoggerBungee.debug(bodyJson.getString("access_token"));
+
+            JSONObject user = getUser(bodyJson);
+
+            if(user == null){
+                ctx.result("Unable to get Discord user details.");
+            }
+
+            ctx.result("Link Successful. Welcome " + user.getString("username") + "#" + user.getString("discriminator") + " (" + user.getString("id") + ")");
+            return;
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        ctx.result("Discord and mc linked");
+        ctx.result("Linking error has occurred. Please contact the developer.");
     }
 
 }

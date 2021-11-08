@@ -14,6 +14,8 @@ import net.md_5.bungee.config.YamlConfiguration;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.UUID;
 
 
 public class BungeeMain extends Plugin{
@@ -22,6 +24,7 @@ public class BungeeMain extends Plugin{
 
     private static WebApp webapp;
     private Configuration config;
+    private HashMap<UUID, Integer> codes = new HashMap<>();
 
     @Override
     public void onEnable(){
@@ -140,4 +143,6 @@ public class BungeeMain extends Plugin{
     public CustomConfigBungee getAuthConfig(){
         return AuthConfig;
     }
+
+    public HashMap<UUID, Integer> getCodes() { return codes; }
 }
