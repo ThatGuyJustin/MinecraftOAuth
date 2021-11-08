@@ -1,0 +1,29 @@
+#######################################################################
+###   The following config options are meant for the server list.   ###
+###           Changing the MOTD, and the hover information.         ###
+#######################################################################
+
+# This is the toggle to enable/disable the plugin at any time.
+enabled: true
+
+web:
+  port: 8000
+  host: "localhost"
+
+# OAuth Stuff for Discord
+discord:
+  oauth_url: ""
+  application_id: ""
+  client_secret: ""
+  redirect_uri: ""
+
+  # Should we check for certain servers?
+  check_servers: false
+  # Should we check for the whitelisted server every time they join?
+  check_server_on_join: false
+  # Should we just check for the user?
+  check_users: true
+
+# Servers to allow through the Auth, or Users, or both /shrug
+whitelisted_servers: ["0000000000000000000"]
+whitelisted_users: ["104376018222972928"]

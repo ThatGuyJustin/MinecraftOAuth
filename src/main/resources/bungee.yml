@@ -1,0 +1,6 @@
+name: MinecraftOAuth
+main: bot.aperture.BungeeMain
+version: 1.0
+authors:
+  - McIsTheLimit (Justin#1337)
+  - nadie__ (Nadie#0063)
