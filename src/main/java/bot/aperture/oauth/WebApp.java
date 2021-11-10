@@ -62,7 +62,6 @@ public class WebApp {
         JavalinLogger.enabled = false;
         app = Javalin.create(config -> {
             config.showJavalinBanner = false;
-            config.enableDevLogging();
             config.addStaticFiles("/web", Location.CLASSPATH);
             config.requestLogger((ctx, timeMs) -> LoggerBungee.info(String.format("[Webserver] %s %s %s took %s ms ", ctx.status(), ctx.method(), ctx.path(), timeMs), true));
         });
@@ -83,8 +82,6 @@ public class WebApp {
         HOST = Spigot.getConfig().getString("web.host");
         PORT = Spigot.getConfig().getInt("web.port");
 
-        String scope;
-
         this.client_id = Spigot.getConfig().getString("discord.client_id");
         this.client_secret = Spigot.getConfig().getString("discord.client_secret");
         this.redirect_uri  = Spigot.getConfig().getString("discord.redirect_uri");
@@ -95,11 +92,6 @@ public class WebApp {
             scope = "identify";
         }
 
-        AuthURL = UrlBuilder.fromString("https://discord.com/api/oauth2/authorize")
-                .addParameter("prompt", "consent")
-                .addParameter("client_id", Spigot.getConfig().getString("discord.client_id"))
-                .addParameter("scope", scope)
-                .addParameter("redirect_uri", Spigot.getConfig().getString("discord.redirect_uri"));
 
         JavalinLogger.enabled = false;
         app = Javalin.create(config -> {
@@ -107,7 +99,6 @@ public class WebApp {
             config.addStaticFiles("/web", Location.CLASSPATH);
             config.requestLogger((ctx, timeMs) -> LoggerSpigot.info(String.format("[Webserver] %s %s %s took %s ms ", ctx.status(), ctx.method(), ctx.path(), timeMs), true));
         });
-
 
 
         app.get("/auth", this::Oauth);

@@ -67,7 +67,9 @@ public class BungeeMain extends Plugin{
 
     @Override
     public void onDisable(){
-
+        if (webapp != null) {
+            webapp.stop();
+        }
     }
 
     public void reloadConfig(){
