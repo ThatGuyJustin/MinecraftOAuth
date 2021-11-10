@@ -1,11 +1,7 @@
-#######################################################################
-###   The following config options are meant for the server list.   ###
-###           Changing the MOTD, and the hover information.         ###
-#######################################################################
-
 # This is the toggle to enable/disable the plugin at any time.
 enabled: true
 
+# Web related stuff
 web:
   enabled: true
   port: 8000

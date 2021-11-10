@@ -4,7 +4,6 @@ import bot.aperture.listeners.BungeeListener;
 import bot.aperture.oauth.WebApp;
 import bot.aperture.utils.CustomConfigBungee;
 import bot.aperture.utils.LoggerBungee;
-import bot.aperture.utils.LoggerSpigot;
 import com.google.common.io.ByteStreams;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -14,17 +13,17 @@ import net.md_5.bungee.config.YamlConfiguration;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.Random;
 
 
 public class BungeeMain extends Plugin{
 
-    public static CustomConfigBungee AuthConfig;
+    public CustomConfigBungee AuthConfig;
 
     private static WebApp webapp;
     private Configuration config;
-    private HashMap<UUID, Integer> codes = new HashMap<>();
+
+    private static final Random random = new Random();
 
     @Override
     public void onEnable(){
@@ -144,5 +143,15 @@ public class BungeeMain extends Plugin{
         return AuthConfig;
     }
 
-    public HashMap<UUID, Integer> getCodes() { return codes; }
+    public static String generateCode() {
+        String chars = "0123456789";
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            code.append(chars.charAt(random.nextInt(chars.length())));
+        }
+
+        return code.toString();
+    }
+
+    public WebApp getWebapp() { return webapp; }
 }

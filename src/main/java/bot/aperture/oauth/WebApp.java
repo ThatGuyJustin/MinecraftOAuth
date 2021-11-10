@@ -38,11 +38,14 @@ public class WebApp {
     private static String client_secret;
     private static String redirect_uri;
     private static String scope;
-    private static final Map<UUID, String> state = new ConcurrentHashMap<>();
+    private final Map<String, UUID> states = new ConcurrentHashMap<>();
+    private final Map<String, UUID> codes = new ConcurrentHashMap<>();
 
     private UrlBuilder AuthURL;
 
     public WebApp(BungeeMain Bungee) {
+        this.Bungee = Bungee;
+
         HOST = Bungee.getConfig().getString("web.host");
         PORT = Bungee.getConfig().getInt("web.port");
 
@@ -56,21 +59,15 @@ public class WebApp {
             scope = "identify";
         }
 
-        AuthURL = UrlBuilder.fromString("https://discord.com/api/oauth2/authorize")
-                .addParameter("prompt", "consent")
-                .addParameter("client_id", Bungee.getConfig().getString("discord.client_id"))
-                .addParameter("scope", scope)
-                .addParameter("redirect_uri", Bungee.getConfig().getString("discord.redirect_uri"))
-                .addParameter("response_type", "code");
-
         JavalinLogger.enabled = false;
         app = Javalin.create(config -> {
             config.showJavalinBanner = false;
+            config.enableDevLogging();
             config.addStaticFiles("/web", Location.CLASSPATH);
             config.requestLogger((ctx, timeMs) -> LoggerBungee.info(String.format("[Webserver] %s %s %s took %s ms ", ctx.status(), ctx.method(), ctx.path(), timeMs), true));
         });
 
-        app.get("/auth", ctx -> ctx.redirect(AuthURL.toString(), 307));
+        app.get("/auth", this::Oauth);
         app.get("/callback", this::OauthCallback);
 
 
@@ -81,6 +78,8 @@ public class WebApp {
     }
 
     public WebApp(SpigotMain Spigot) {
+        this.Spigot = Spigot;
+
         HOST = Spigot.getConfig().getString("web.host");
         PORT = Spigot.getConfig().getInt("web.port");
 
@@ -111,7 +110,7 @@ public class WebApp {
 
 
 
-        app.get("/auth", ctx -> ctx.redirect(AuthURL.toString(), 307));
+        app.get("/auth", this::Oauth);
         app.get("/callback", this::OauthCallback);
 
         app.error(403, WebApp::ErrorPageRender);
@@ -161,8 +160,6 @@ public class WebApp {
         Request req = new Request.Builder().url("https://discord.com/api/v9/users/@me")
                 .addHeader("Authorization", "Bearer " + oauth.getString("access_token")).build();
 
-        LoggerBungee.debug(req.toString());
-
         try (Response resp = httpClient.newCall(req).execute()) {
             if (resp.code() == 401) {
                 return null;
@@ -182,10 +179,53 @@ public class WebApp {
         }
     }
 
+    private void Oauth(@NotNull Context ctx) {
+
+        String code = ctx.queryParam("code");
+
+        if(code == null || code.length() == 0 || !getCodes().containsKey(code)) ctx.redirect(this.HOST + "/codenotfound.html", 307);
+
+        UUID puid = getCodes().get(code);
+        String state = UUID.randomUUID().toString();
+        this.states.put(state, puid);
+
+        if(this.Spigot != null){
+
+            AuthURL = UrlBuilder.fromString("https://discord.com/api/oauth2/authorize")
+                    .addParameter("prompt", "consent")
+                    .addParameter("client_id", client_id)
+                    .addParameter("scope", scope)
+                    .addParameter("redirect_uri", redirect_uri)
+                    .addParameter("response_type", "code")
+                    .addParameter("state", state);
+
+            ctx.redirect(AuthURL.toString(), 307);
+
+        }else{
+
+            AuthURL = UrlBuilder.fromString("https://discord.com/api/oauth2/authorize")
+                    .addParameter("prompt", "consent")
+                    .addParameter("client_id", client_id)
+                    .addParameter("scope", scope)
+                    .addParameter("redirect_uri", redirect_uri)
+                    .addParameter("response_type", "code")
+                    .addParameter("state", state);
+
+            ctx.redirect(AuthURL.toString(), 307);
+        }
+
+
+    }
+
 
     private void OauthCallback(@NotNull Context ctx) {
         //Do something here to take the code, given as a pram and yeet yeet it to get a barrer/refresh token
         String code = ctx.queryParam("code");
+        String state = ctx.queryParam("state");
+
+        if(state == null || !this.states.containsKey(state)){
+            ctx.redirect("/notvalidauth", 307);
+        }
 
         FormBody body = new FormBody.Builder().add("client_id", client_id)
                 .add("client_secret", client_secret)
@@ -213,14 +253,32 @@ public class WebApp {
                 ctx.result("Unable to get Discord user details.");
             }
 
+            if(this.Spigot != null){
+                return;
+            }else{
+                Map<String, String> auth = new ConcurrentHashMap<>();
+
+                auth.put("user_id", user.getString("id"));
+                auth.put("username", user.getString("username"));
+                auth.put("discriminator", user.getString("discriminator"));
+                auth.put("user_id", user.getString("id"));
+
+                this.Bungee.getAuthConfig().getConfig().set("users." + states.get(state).toString(), auth);
+                this.Bungee.getAuthConfig().save();
+
+
+            }
+
             ctx.result("Link Successful. Welcome " + user.getString("username") + "#" + user.getString("discriminator") + " (" + user.getString("id") + ")");
             return;
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         ctx.result("Linking error has occurred. Please contact the developer.");
     }
+
+    public Map<String, UUID> getCodes() { return codes; }
 
 }
