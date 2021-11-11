@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -125,7 +126,8 @@ public class WebApp {
     public void stop() {
         if (app != null) {
             app.stop();
-            LoggerSpigot.log("[Webserver] Stopped", true);
+            if(this.Spigot != null) LoggerSpigot.log("[Webserver] Stopped", true);
+            else LoggerBungee.log("[Webserver] Stopped", true);
         }
     }
 
@@ -244,17 +246,20 @@ public class WebApp {
                 ctx.result("Unable to get Discord user details.");
             }
 
+            String key = "users." + states.get(state).toString() + ".";
+
             if(this.Spigot != null){
                 return;
             }else{
-                Map<String, String> auth = new ConcurrentHashMap<>();
 
-                auth.put("user_id", user.getString("id"));
-                auth.put("username", user.getString("username"));
-                auth.put("discriminator", user.getString("discriminator"));
-                auth.put("user_id", user.getString("id"));
-
-                this.Bungee.getAuthConfig().getConfig().set("users." + states.get(state).toString(), auth);
+                this.Bungee.getAuthConfig().getConfig().set(key + "user_id", user.getLong("id"));
+                this.Bungee.getAuthConfig().getConfig().set(key + "username", user.getString("username"));
+                this.Bungee.getAuthConfig().getConfig().set(key + "discriminator", user.getInt("discriminator"));
+                this.Bungee.getAuthConfig().getConfig().set(key + "auth_time", new Timestamp(System.currentTimeMillis()).toString());
+                this.Bungee.getAuthConfig().getConfig().set(key + "access_token", bodyJson.getString("access_token"));
+                this.Bungee.getAuthConfig().getConfig().set(key + "refresh_token", bodyJson.getString("refresh_token"));
+                this.Bungee.getAuthConfig().getConfig().set(key + "expires_in", bodyJson.getInt("expires_in"));
+                this.Bungee.getAuthConfig().getConfig().set(key + "auth_time_ms", System.currentTimeMillis());
                 this.Bungee.getAuthConfig().save();
 
 
