@@ -63,13 +63,13 @@ public class WebApp {
         JavalinLogger.enabled = false;
         app = Javalin.create(config -> {
             config.showJavalinBanner = false;
+            config.enableDevLogging();
             config.addStaticFiles("/web", Location.CLASSPATH);
             config.requestLogger((ctx, timeMs) -> LoggerBungee.info(String.format("[Webserver] %s %s %s took %s ms ", ctx.status(), ctx.method(), ctx.path(), timeMs), true));
         });
 
         app.get("/auth", this::Oauth);
         app.get("/callback", this::OauthCallback);
-
 
         app.error(403, WebApp::ErrorPageRender);
         app.error(404, WebApp::ErrorPageRender);
@@ -176,7 +176,15 @@ public class WebApp {
 
         String code = ctx.queryParam("code");
 
-        if(code == null || code.length() == 0 || !getCodes().containsKey(code)) ctx.redirect(this.HOST + "/codenotfound.html", 307);
+        if(code == null || code.length() == 0){
+            ctx.render("/web/code.html");
+            return;
+        }
+
+        if(!getCodes().containsKey(code)) {
+            ctx.render("/web/codenotfound.html");
+            return;
+        }
 
         UUID puid = getCodes().get(code);
         String state = UUID.randomUUID().toString();

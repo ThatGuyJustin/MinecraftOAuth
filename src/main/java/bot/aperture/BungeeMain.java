@@ -148,7 +148,7 @@ public class BungeeMain extends Plugin{
     public static String generateCode() {
         String chars = "0123456789";
         StringBuilder code = new StringBuilder();
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 6; i++) {
             code.append(chars.charAt(random.nextInt(chars.length())));
         }
 
