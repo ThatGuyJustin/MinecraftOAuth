@@ -1,4 +1,5 @@
 main: bot.aperture.SpigotMain
+api-version: 1.18
 authors:
   - McIsTheLimit (Justin#1337)
   - nadie__ (Nadie#0063)
